@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>KOF & MTX Rechner</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#16312f;background:#eef7f5}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at top right,rgba(20,184,166,.16),transparent 32rem),#eef7f5}
+button,input{font:inherit}
+.app{width:min(100%,860px);margin:0 auto;padding:28px 16px 48px}
+header{padding:8px 4px 20px}
+.eyebrow{margin:0 0 6px;color:#0f766e;font-size:.82rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
+h1{margin:0;font-size:clamp(2.2rem,8vw,3.6rem);letter-spacing:-.05em}
+.subtitle{margin:8px 0 0;color:#53706d}
+.card{margin-top:14px;padding:20px;border:1px solid rgba(15,118,110,.13);border-radius:22px;background:#fff;box-shadow:0 12px 35px rgba(18,70,65,.08)}
+h2{margin:0 0 16px;font-size:1.1rem}
+label{display:block;margin:16px 0 7px;font-weight:750}
+label small{display:block;margin-top:2px;color:#6b8582;font-weight:500}
+.input-row{display:grid;grid-template-columns:1fr auto;align-items:center;overflow:hidden;border:1.5px solid #b7cfcb;border-radius:14px;background:#fff}
+.input-row:focus-within{border-color:#0f766e;box-shadow:0 0 0 4px rgba(15,118,110,.11)}
+input{width:100%;min-width:0;padding:14px 15px;border:0;outline:0;background:transparent;color:#16312f;font-size:1.1rem}
+.input-row span{padding:0 15px;color:#617a77;font-weight:700}
+.secondary{width:100%;margin-top:18px;padding:13px 16px;border:0;border-radius:13px;background:#dff0ed;color:#0b625b;font-weight:800}
+.result-card{background:linear-gradient(135deg,#0f766e,#115e59);color:#fff}
+.result-heading{display:flex;gap:14px;align-items:flex-start;justify-content:space-between}
+.label{margin:0 0 4px;color:#cce9e5;font-size:.9rem}
+.bsa{margin:0;font-size:2.25rem;font-weight:850;letter-spacing:-.04em}
+.badge{max-width:48%;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.16);font-size:.75rem;font-weight:750;text-align:center}
+.formula{margin:13px 0 0;color:#d9f1ee;font-size:.83rem}
+.hint{margin:-6px 0 15px;color:#607a77;font-size:.9rem;line-height:1.45}
+.notice{margin:12px 0 0;padding:11px 13px;border-radius:12px;background:#fff4d6;color:#755400;font-size:.86rem;font-weight:700}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:720px}
+th,td{padding:13px 8px;border-bottom:1px solid #dbe8e6;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:#607a77;font-size:.76rem;letter-spacing:.03em;text-transform:uppercase}
+td{font-variant-numeric:tabular-nums}
+td.absolute{color:#0f766e;font-weight:850}
+td.excess{color:#9a4b00;font-weight:750}
+td.max{color:#8b1e1e;font-weight:850}
+.empty{padding:24px 8px;color:#78908d;text-align:center!important}
+footer{padding:20px 5px 0;color:#6f8582;font-size:.78rem;line-height:1.4;text-align:center}
+@media(max-width:460px){.card{padding:17px;border-radius:18px}.badge{font-size:.68rem}}
+</style>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kinderrheuma">
+
+</head>
+<body>
+<main class="app">
+<header>
+<p class="eyebrow">Pädiatrischer Rechner</p>
+<h1>KOF &amp; MTX</h1>
+<p class="subtitle">Körperoberfläche und wöchentliche Methotrexat-Dosis</p>
+</header>
+
+<section class="card">
+<h2>Eingabe</h2>
+<label for="weight">Gewicht</label>
+<div class="input-row">
+<input id="weight" type="number" inputmode="decimal" min="0.1" max="300" step="0.1" placeholder="z. B. 16">
+<span>kg</span>
+</div>
+
+<label for="height">Körpergröße <small>optional – überschreibt die Gewichtsformel</small></label>
+<div class="input-row">
+<input id="height" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="z. B. 105">
+<span>cm</span>
+</div>
+<button id="reset" class="secondary" type="button">Zurücksetzen</button>
+</section>
+
+<section class="card result-card" aria-live="polite">
+<div class="result-heading">
+<div>
+<p class="label">Körperoberfläche</p>
+<p id="bsa" class="bsa">–</p>
+</div>
+<span id="method" class="badge">Gewicht eingeben</span>
+</div>
+<p id="formula" class="formula"></p>
+</section>
+
+<section class="card">
+<h2>MTX wöchentlich</h2>
+<p class="hint">
+Die Absolutdosis wird immer auf den nächstniedrigeren 2,5-mg-Schritt abgerundet.
+Die absolute Obergrenze beträgt 25 mg/Woche.
+</p>
+<p class="notice">
+„+2,5 mg wären zu viel“ zeigt, um wie viele mg/m² die nächsthöhere verfügbare Dosis die jeweilige Zieldosis überschreiten würde.
+</p>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Zieldosis</th>
+<th>Berechnet</th>
+<th>Gewählte Dosis</th>
+<th>Nächste Stufe</th>
+<th>+2,5 mg wären zu viel</th>
+</tr>
+</thead>
+<tbody id="doseTable">
+<tr><td colspan="5" class="empty">Bitte Gewicht eingeben.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>Rechenhilfe für medizinisches Fachpersonal. Klinische Plausibilitätsprüfung erforderlich.</footer>
+</main>
+
+<script>
+(function(){
+const doses=[7.5,10,12.5,15,17.5,20];
+const MAX_DOSE=25;
+
+const weightInput=document.getElementById("weight");
+const heightInput=document.getElementById("height");
+const bsaOutput=document.getElementById("bsa");
+const methodOutput=document.getElementById("method");
+const formulaOutput=document.getElementById("formula");
+const doseTable=document.getElementById("doseTable");
+const resetButton=document.getElementById("reset");
+
+function parseNumber(value){
+ const number=Number.parseFloat(String(value).replace(",","."));
+ return Number.isFinite(number)?number:null;
+}
+
+function calculateBsa(weight,height){
+ if(height!==null&&height>0){
+  return {
+   value:Math.sqrt((height*weight)/3600),
+   method:"Mosteller mit Körpergröße",
+   formula:"√(("+height.toFixed(1)+" cm × "+weight.toFixed(1)+" kg) / 3600)"
+  };
+ }
+ return {
+  value:(weight*4+7)/(90+weight),
+  method:"Gewichtsformel",
+  formula:"(("+weight.toFixed(1)+" kg × 4) + 7) / (90 + "+weight.toFixed(1)+" kg)"
+ };
+}
+
+function floorTo2Point5(value){
+ return Math.floor((value+1e-9)/2.5)*2.5;
+}
+
+function fmt(value,digits){
+ return value.toLocaleString("de-AT",{
+  minimumFractionDigits:digits,
+  maximumFractionDigits:digits
+ });
+}
+
+function fmtMg(value){
+ const digits=Math.abs(value-Math.round(value))<1e-9?0:1;
+ return value.toLocaleString("de-AT",{
+  minimumFractionDigits:digits,
+  maximumFractionDigits:1
+ })+" mg";
+}
+
+function render(){
+ const weight=parseNumber(weightInput.value);
+ const height=parseNumber(heightInput.value);
+
+ if(weight===null||weight<=0){
+  bsaOutput.textContent="–";
+  methodOutput.textContent="Gewicht eingeben";
+  formulaOutput.textContent="";
+  doseTable.innerHTML='<tr><td colspan="5" class="empty">Bitte Gewicht eingeben.</td></tr>';
+  return;
+ }
+
+ const r=calculateBsa(weight,height);
+ bsaOutput.textContent=fmt(r.value,3)+" m²";
+ methodOutput.textContent=r.method;
+ formulaOutput.textContent=r.formula;
+
+ doseTable.innerHTML=doses.map(function(target){
+  const calculated=r.value*target;
+  const floored=floorTo2Point5(calculated);
+  const chosen=Math.min(floored,MAX_DOSE);
+  const targetDigits=(target%1===0)?0:1;
+
+  let nextDose;
+  let excessText;
+  let nextText;
+  let nextClass="";
+  let excessClass="excess";
+
+  if(chosen>=MAX_DOSE){
+   nextDose=null;
+   nextText="–";
+   excessText="Max. 25 mg";
+   nextClass="max";
+   excessClass="max";
+  } else {
+   nextDose=chosen+2.5;
+   nextText=fmtMg(nextDose);
+   const nextMgPerM2=nextDose/r.value;
+   const excess=nextMgPerM2-target;
+   excessText="+"+fmt(excess,2)+" mg/m²";
+  }
+
+  const capped=calculated>MAX_DOSE;
+  const chosenText=fmtMg(chosen)+(capped?" (Maximum)":"");
+
+  return "<tr>"+
+   "<td>"+fmt(target,targetDigits)+" mg/m²</td>"+
+   "<td>"+fmtMg(calculated)+"</td>"+
+   "<td class='absolute"+(capped?" max":"")+"'>"+chosenText+"</td>"+
+   "<td class='"+nextClass+"'>"+nextText+"</td>"+
+   "<td class='"+excessClass+"'>"+excessText+"</td>"+
+  "</tr>";
+ }).join("");
+}
+
+weightInput.addEventListener("input",render);
+heightInput.addEventListener("input",render);
+weightInput.addEventListener("change",render);
+heightInput.addEventListener("change",render);
+
+resetButton.addEventListener("click",function(){
+ weightInput.value="";
+ heightInput.value="";
+ render();
+ weightInput.focus();
+});
+
+render();
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .catch(function (error) {
+        console.error("Service Worker konnte nicht registriert werden:", error);
+      });
+  });
+}
+</script>
+
+</body>
+</html>
